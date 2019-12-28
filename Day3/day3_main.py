@@ -62,8 +62,8 @@ def day3(instr: List[List[str]], *, show_wires: bool = False):
             wires.append(calc_turns(i))
         wires = np.asarray(wires, dtype=int)
         plt.figure("Jumble of wires")
-        plt.plot(wires[0][:, 0], wires[0][:, 1], color="k")
-        plt.plot(wires[1][:, 0], wires[1][:, 1], color="r")
+        for wire in wires:
+            plt.plot(wire[:, 0], wire[:, 1])
         plt.show()
     wires = []
     for i in instr:
@@ -80,7 +80,7 @@ def day3(instr: List[List[str]], *, show_wires: bool = False):
 
 @time_decorator
 def day3_part1(wires: List[List[List[int]]]) -> Tuple[List[List[int]], int]:
-    wires_unique_location = list(map(set, wires))  # Ignore self crossings
+    wires_unique_location = iter(map(set, wires))  # Ignore self crossings
     intersections = list(set.intersection(*wires_unique_location))
     manhattan_dists = np.sum(np.abs(np.asarray(intersections)), axis=1)
     return intersections, min(manhattan_dists)
@@ -109,4 +109,4 @@ if __name__ == "__main__":
         n_i = len(i)
         if n_i < max_instr:
             i += (["R0"]*(max_instr - n_i))
-    day3(instructions, show_wires=False)
+    day3(instructions, show_wires=True)
