@@ -109,5 +109,4 @@ if __name__ == "__main__":
         n_i = len(i)
         if n_i < max_instr:
             i += (["R0"]*(max_instr - n_i))
-    print(instructions); quit()
     day3(instructions, show_wires=False)
