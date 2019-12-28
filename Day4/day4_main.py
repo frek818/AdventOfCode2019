@@ -2,8 +2,11 @@ from collections import Counter
 
 import numpy as np
 
-# Not very elegant but works
-if __name__ == "__main__":
+from my_tools import time_decorator
+
+
+@time_decorator
+def my_answer():
     start = 264793
     end = 803935
 
@@ -14,11 +17,43 @@ if __name__ == "__main__":
     for i in range(5):
         valid_passwords = np.r_[valid_passwords, passwords[passwords[:, i] == passwords[:, i + 1]]]
     valid_passwords = np.unique(valid_passwords, axis=0)
-    print(f"PART 1\t Number of valid passwords: {len(valid_passwords)}")
+
     valid_ctr = 0
     for password in iter(map(dict, map(Counter, valid_passwords))):
         for occurrence in password.values():
             if occurrence == 2:
                 valid_ctr += 1
                 break
-    print(f"PART 2\t Number of valid passwords: {valid_ctr}")
+
+
+# Much more elegant solution
+@time_decorator
+def dvrzero_answer():
+    potentials = list(map(str, range(264793, 803935)))
+
+    passedfirst = []
+    for item in potentials:
+        if item == sorted(item):
+            passedfirst.append(item)
+
+    passedsecond = []
+    for number in passedfirst:
+        for digit in number:
+            count = number.count(digit)
+            if count >= 2:
+                passedsecond.append(number)
+                break
+
+    passedthird = []
+    for number in passedsecond:
+        for digit in number:
+            count = number.count(digit)
+            if count == 2:
+                passedthird.append(number)
+                break
+
+
+# Not very elegant but works
+if __name__ == "__main__":
+    my_answer()
+    dvrzero_answer()
