@@ -103,4 +103,11 @@ if __name__ == "__main__":
         instructions = []
         for line in f:
             instructions.append(line.split(","))
+    # Extend the lists to equal length to allow for conversion to ndarray
+    max_instr = max(map(len, instructions))
+    for i in instructions:
+        n_i = len(i)
+        if n_i < max_instr:
+            i += (["R0"]*(max_instr - n_i))
+    print(instructions); quit()
     day3(instructions, show_wires=False)
