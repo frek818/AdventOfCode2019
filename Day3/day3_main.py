@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -41,15 +41,21 @@ def calc_grid_path(instr: List[str]) -> List[List[int]]:
         x_step, y_step = read_instruction(command)
         new_coord = [current_coord[0] + x_step, current_coord[1] + y_step]
         if x_step == 0:
-            grid_path += [(current_coord[0], y) for y in range(current_coord[1] + 1, new_coord[1] + 1)]
+            if new_coord[1] > current_coord[1]:
+                grid_path += [(current_coord[0], y) for y in range(current_coord[1] + 1, new_coord[1] + 1)]
+            else:
+                grid_path += [(current_coord[0], y) for y in range(current_coord[1] - 1, new_coord[1] - 1, -1)]
         else:
-            grid_path += [(x, current_coord[1]) for x in range(current_coord[0] + 1, new_coord[0] + 1)]
+            if new_coord[0] > current_coord[0]:
+                grid_path += [(x, current_coord[1]) for x in range(current_coord[0] + 1, new_coord[0] + 1)]
+            else:
+                grid_path += [(x, current_coord[1]) for x in range(current_coord[0] - 1, new_coord[0] - 1, -1)]
         current_coord = new_coord[:]
     return grid_path
 
 
 @time_decorator
-def day3_part1(instr: List[List[str]], *,  show_wires: bool = True) -> np.ndarray:
+def day3(instr: List[List[str]], *, show_wires: bool = False):
     if show_wires:
         wires = []
         for i in instr:
@@ -61,10 +67,35 @@ def day3_part1(instr: List[List[str]], *,  show_wires: bool = True) -> np.ndarra
         plt.show()
     wires = []
     for i in instr:
-        wires.append(set(calc_grid_path(i)))  # Ignore self crossings
-    intersections = list(set.intersection(*wires))
+        wires.append(calc_grid_path(i))
+
+    print(f"{'=' * 20} PART 1 {'=' * 20}")
+    intersections, closest_intersection = day3_part1(wires)
+    print(f"Manhattan distance of closest intersection = {closest_intersection}")
+
+    print(f"{'=' * 20} PART 2 {'=' * 20}")
+    shortest_path = day3_part2(wires, intersections)
+    print(f"Shortest path to intersection = {shortest_path}")
+
+
+@time_decorator
+def day3_part1(wires: List[List[List[int]]]) -> Tuple[List[List[int]], int]:
+    wires_unique_location = list(map(set, wires))  # Ignore self crossings
+    intersections = list(set.intersection(*wires_unique_location))
     manhattan_dists = np.sum(np.abs(np.asarray(intersections)), axis=1)
-    return min(manhattan_dists)
+    return intersections, min(manhattan_dists)
+
+
+@time_decorator
+def day3_part2(wires: List[List[List[int]]], intersections: List[List[int]]) -> int:
+    intersection_idxs = []
+    for crossing in intersections:
+        idx = []
+        for wire in wires:
+            idx.append(wire.index(crossing))
+        intersection_idxs.append(idx)
+    units_to_intersection = np.sum(np.asarray(intersection_idxs), axis=1) + 2  # Add 2 to include intersection
+    return min(units_to_intersection)
 
 
 if __name__ == "__main__":
@@ -72,6 +103,4 @@ if __name__ == "__main__":
         instructions = []
         for line in f:
             instructions.append(line.split(","))
-    print(f"{'=' * 20} PART 1 {'=' * 20}")
-    closest_intersection = day3_part1(instructions, show_wires=False)
-    print(f"Manhattan distance of closest intersection = {closest_intersection}")
+    day3(instructions, show_wires=False)
