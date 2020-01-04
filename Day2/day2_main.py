@@ -30,7 +30,7 @@ def day2_part2(comp, inp):
 
 
 if __name__ == "__main__":
-    with open("input.csv") as f:
+    with open("day2_input.csv") as f:
         program_input = list(map(int, next(f).split(',')))
     computer = Intcode()
     day2_part1(computer, program_input)

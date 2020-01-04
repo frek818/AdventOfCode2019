@@ -99,7 +99,7 @@ def day3_part2(wires: List[List[List[int]]], intersections: List[List[int]]) -> 
 
 
 if __name__ == "__main__":
-    with open("input.txt", "r") as f:
+    with open("day3_input.txt", "r") as f:
         instructions = []
         for line in f:
             instructions.append(line.split(","))

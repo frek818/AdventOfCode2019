@@ -1,4 +1,5 @@
 import numpy as np
+
 from my_tools import time_decorator
 
 
@@ -42,7 +43,7 @@ def get_fuel_vector_recursive(mass_vec: np.ndarray) -> int:
 
 if __name__ == "__main__":
     masses = []
-    with open("input.txt", "r") as f:
+    with open("day1_input.txt", "r") as f:
         for mass in f:
             masses.append(int(mass))
 
