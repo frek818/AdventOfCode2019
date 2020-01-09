@@ -12,26 +12,26 @@ class TestIntcode(unittest.TestCase):
         self.computer = Intcode()
 
     def tearDown(self) -> None:
-        self.computer.program_input = None
+        self.computer.program = None
 
     def test_init(self):
-        self.assertTrue(self.computer.program_input is None)
+        self.assertTrue(self.computer.program is None)
 
     def test_addition(self):
         self.computer.new_program([1001, 1, 1, 0, 99])
-        self.assertEqual(self.computer.program_input, [2, 1, 1, 0, 99])
+        self.assertEqual(self.computer.program, [2, 1, 1, 0, 99])
 
     def test_multiplication_1(self):
         self.computer.new_program([1002, 3, 2, 3, 99])
-        self.assertEqual(self.computer.program_input, [1002, 3, 2, 6, 99])
+        self.assertEqual(self.computer.program, [1002, 3, 2, 6, 99])
 
     def test_multiplication_2(self):
         self.computer.new_program([1002, 4, 99, 5, 99, 0])
-        self.assertEqual(self.computer.program_input, [1002, 4, 99, 5, 99, 9801])
+        self.assertEqual(self.computer.program, [1002, 4, 99, 5, 99, 9801])
 
     def test_program(self):
         self.computer.new_program([1001, 1, 1001, 4, 99, 5, 6, 0, 99])
-        self.assertEqual(self.computer.program_input, [30, 1, 1001, 4, 1002, 5, 6, 0, 99])
+        self.assertEqual(self.computer.program, [30, 1, 1001, 4, 1002, 5, 6, 0, 99])
 
     def test_unknown_opcode(self):
         self.assertRaises(KeyError, self.computer.new_program([98, 0, 0, 99]))
@@ -44,6 +44,40 @@ class TestIntcode(unittest.TestCase):
             with open(file_path, "r") as f:
                 self.computer.new_program(list(map(int, next(f).split(","))))
         self.assertEqual(stdout.getvalue(), "0\n0\n0\n0\n0\n0\n0\n0\n0\n13210611\n")
+
+    @mock.patch("builtins.input", side_effect=["1", "8"])
+    def test_equal_to(self, inp):
+        stdout = StringIO()
+        with redirect_stdout(stdout):
+            self.computer.new_program([3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8])
+            self.computer.new_program([3, 3, 1108, -1, 8, 3, 4, 3, 99])
+        self.assertEqual(stdout.getvalue(), "0\n1\n")
+
+    @mock.patch("builtins.input", side_effect=["1", "8"])
+    def test_less_than(self, inp):
+        stdout = StringIO()
+        with redirect_stdout(stdout):
+            self.computer.new_program([3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8])
+            self.computer.new_program([3, 3, 1107, -1, 8, 3, 4, 3, 99])
+        self.assertEqual(stdout.getvalue(), "1\n0\n")
+
+    @mock.patch("builtins.input", side_effect=["1", "0"])
+    def test_jump(self, inp):
+        stdout = StringIO()
+        with redirect_stdout(stdout):
+            self.computer.new_program([3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9])
+            self.computer.new_program([3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1])
+        self.assertEqual(stdout.getvalue(), "1\n0\n")
+
+    @mock.patch("builtins.input", side_effect=["7", "8", "9"])
+    def test_program_2(self, inp):
+        stdout = StringIO()
+        with redirect_stdout(stdout):
+            for i in range(3):
+                self.computer.new_program([3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
+                                           1106, 0, 36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
+                                           999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99])
+        self.assertEqual(stdout.getvalue(), "999\n1000\n1001\n")
 
 
 if __name__ == '__main__':
