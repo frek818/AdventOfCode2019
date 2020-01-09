@@ -1,4 +1,8 @@
+import os
 import unittest
+from contextlib import redirect_stdout
+from io import StringIO
+from unittest import mock
 
 from Intcode import Intcode
 
@@ -31,6 +35,15 @@ class TestIntcode(unittest.TestCase):
 
     def test_unknown_opcode(self):
         self.assertRaises(KeyError, self.computer.new_program([98, 0, 0, 99]))
+
+    @mock.patch("builtins.input", side_effect=["1"])
+    def test_immediate_mode(self, inp):
+        stdout = StringIO()
+        with redirect_stdout(stdout):
+            file_path = (os.path.dirname(__file__)) + "/immediate_mode_test_input.csv"
+            with open(file_path, "r") as f:
+                self.computer.new_program(list(map(int, next(f).split(","))))
+        self.assertEqual(stdout.getvalue(), "0\n0\n0\n0\n0\n0\n0\n0\n0\n13210611\n")
 
 
 if __name__ == '__main__':
