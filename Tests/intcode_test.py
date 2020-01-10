@@ -45,12 +45,11 @@ class TestIntcode(unittest.TestCase):
                 self.computer.new_program(list(map(int, next(f).split(","))))
         self.assertEqual(stdout.getvalue(), "0\n0\n0\n0\n0\n0\n0\n0\n0\n13210611\n")
 
-    @mock.patch("builtins.input", side_effect=["1", "8"])
-    def test_equal_to(self, inp):
+    def test_equal_to(self):
         stdout = StringIO()
         with redirect_stdout(stdout):
-            self.computer.new_program([3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8])
-            self.computer.new_program([3, 3, 1108, -1, 8, 3, 4, 3, 99])
+            self.computer.new_program([3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8], user_input=[1])
+            self.computer.new_program([3, 3, 1108, -1, 8, 3, 4, 3, 99], user_input=[8])
         self.assertEqual(stdout.getvalue(), "0\n1\n")
 
     @mock.patch("builtins.input", side_effect=["1", "8"])
@@ -61,12 +60,11 @@ class TestIntcode(unittest.TestCase):
             self.computer.new_program([3, 3, 1107, -1, 8, 3, 4, 3, 99])
         self.assertEqual(stdout.getvalue(), "1\n0\n")
 
-    @mock.patch("builtins.input", side_effect=["1", "0"])
-    def test_jump(self, inp):
+    def test_jump(self):
         stdout = StringIO()
         with redirect_stdout(stdout):
-            self.computer.new_program([3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9])
-            self.computer.new_program([3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1])
+            self.computer.new_program([3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9], user_input=[1])
+            self.computer.new_program([3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1], user_input=[0])
         self.assertEqual(stdout.getvalue(), "1\n0\n")
 
     @mock.patch("builtins.input", side_effect=["7", "8", "9"])
