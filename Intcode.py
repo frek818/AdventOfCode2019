@@ -10,23 +10,24 @@ class Intcode:
         self.program = program_instructions
         self.user_input = user_input
         self.instruction_ptr = 0
-        self.opcode = {1: self.addition, 2: self.multiplication, 3: self.save_param, 4: self.output_param,
+        self.opcode = {1: self.addition, 2: self.multiplication, 3: self.save_param, 4: self.save_program_output,
                        5: self.jump_if_true, 6: self.jump_if_false, 7: self.less_than, 8: self.equal_to,
                        99: self.end_program}
-        if self.program is not None:
-            self.program = self.program[:]
-            self.opcode[self.program[self.instruction_ptr]]()
-        if self.user_input is not None:
-            self.user_input = iter(self.user_input[:])
-        # else:
-        #     print("Awaiting instructions...")
+        self.program_output = []
+        self.suppress_output = False
+        self.has_program_finished = False
+        self.new_program(self.program, user_input=self.user_input)
 
     def new_program(self, new_instructions: List, *, user_input: List = None):
+        if new_instructions is None:
+            return
         self.program = new_instructions[:]
         self.instruction_ptr = 0
+        self.program_output = []
         self.user_input = user_input
         if self.user_input is not None:
             self.user_input = iter(self.user_input[:])
+        self.has_program_finished = False
         self.advance(0)
 
     def addition(self, p1_mode: int = 0, p2_mode: int = 0):
@@ -44,12 +45,19 @@ class Intcode:
         if self.user_input is None:
             self.program[store_idx] = int(input("User input requested: "))
         else:
-            self.program[store_idx] = next(self.user_input)
+            try:
+                self.program[store_idx] = next(self.user_input)
+            except StopIteration:
+                # print("Awaiting input...")
+                return
         self.advance(2)
 
-    def output_param(self, p1_mode: int = 0):
+    def resume_execution(self):
+        self.advance(0)
+
+    def save_program_output(self, p1_mode: int = 0):
         param_idx = self.program[self.instruction_ptr + 1]
-        print(self.read_mode(param_idx, p1_mode))
+        self.program_output.append(self.read_mode(param_idx, p1_mode))
         self.advance(2)
 
     def jump_if_true(self, p1_mode: int = 0, p2_mode: int = 0):
@@ -89,7 +97,6 @@ class Intcode:
         instruction = str(self.program[self.instruction_ptr])
         opcode_key = int(instruction[-2:])
         parameter_modes = map(int, reversed(instruction[:-2]))
-        # print(f"Idx {self.instruction_ptr}\tOpcode {self.program_input[self.instruction_ptr]}")
         try:
             self.opcode[opcode_key](*parameter_modes)
         except KeyError:
@@ -104,7 +111,9 @@ class Intcode:
         else:
             raise ValueError("Unknown parameter mode")
 
-    @staticmethod
-    def end_program():
-        pass
+    def end_program(self):
+        self.has_program_finished = True
+        if not self.suppress_output:
+            for output in self.program_output:
+                print(output)
         # print("Finished program execution!")

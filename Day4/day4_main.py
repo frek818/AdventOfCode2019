@@ -53,7 +53,22 @@ def dvrzero_answer():
                 break
 
 
+@time_decorator
+def count_passwords_part2(constraint):
+    def count(current, i):
+        if i == 6:
+            if current not in constraint:
+                return 0
+            sizes = list(Counter(str(current)).values())
+            return 1 if 2 in sizes else 0
+        elif i == 0:
+            return sum(count(current * 10 + d, i + 1) for d in range(1, 10))
+        return sum(count(current * 10 + d, i + 1) for d in range(current % 10, 10))
+    return count(0, 0)
+
+
 # Not very elegant but works
 if __name__ == "__main__":
     my_answer()
     dvrzero_answer()
+    print(count_passwords_part2(range(264793, 803935)))
