@@ -31,14 +31,12 @@ def part2(program):
         comps[0].user_input = iter([0])
         comps[0].resume_execution()
         active_c = 1
-        complete = False
-        while not complete:
+        while not comps[-1].has_program_finished:
             if active_c > 4:
                 active_c = 0
             comps[active_c].user_input = iter([comps[active_c - 1].program_output[-1]])
             comps[active_c].resume_execution()
             active_c += 1
-            complete = all([x.has_program_finished for x in comps])
         if comps[-1].program_output[-1] > t_signal:
             t_signal = comps[-1].program_output[-1]
     return t_signal

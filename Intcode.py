@@ -48,7 +48,7 @@ class Intcode:
             try:
                 self.program[store_idx] = next(self.user_input)
             except StopIteration:
-                # print("Awaiting input...")
+                print("Awaiting input...")
                 return
         self.advance(2)
 
