@@ -131,8 +131,10 @@ class Intcode:
             raise ValueError("Instruction cannot write to parameter in Immediate Mode")
         try:
             if mode == Intcode.PARAMETER_MODE:
+                self.program[value]  # Trigger IndexError
                 return value
             elif mode == Intcode.RELATIVE_MODE:
+                self.program[self.relative_base + value]  # Trigger IndexError
                 return self.relative_base + value
             else:
                 raise ValueError(f"Unknown parameter mode {mode}")
