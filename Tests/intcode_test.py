@@ -77,6 +77,19 @@ class TestIntcode(unittest.TestCase):
                                            999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99])
         self.assertEqual(stdout.getvalue(), "999\n1000\n1001\n")
 
+    def test_large_number(self):
+        self.computer.new_program([1102, 34915192, 34915192, 7, 4, 7, 99, 0])
+        self.assertEqual(self.computer.program_output[0], 1219070632396864)
+
+    def test_large_number_2(self):
+        self.computer.new_program([104, 1125899906842624, 99])
+        self.assertEqual(self.computer.program_output[0], 1125899906842624)
+
+    def test_relative_mode(self):
+        program = [109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99]
+        self.computer.new_program(program)
+        self.assertEqual(self.computer.program_output, program)
+
 
 if __name__ == '__main__':
     unittest.main()
