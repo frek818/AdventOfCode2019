@@ -1,6 +1,11 @@
 from typing import List
 
 
+class ProgramDict(dict):
+    def __missing__(self, key):
+        return 0
+
+
 class Intcode:
 
     PARAMETER_MODE = 0
@@ -31,21 +36,23 @@ class Intcode:
         if self.user_input is not None:
             self.user_input = iter(self.user_input[:])
         self.has_program_finished = False
-        self.advance(0)
+        n_parameters = 0
+        while not self.has_program_finished:
+            n_parameters = self.next_instruction(n_parameters)
 
-    def addition(self, p1_mode: int = 0, p2_mode: int = 0, p3_mode: int = 0):
+    def addition(self, p1_mode: int = 0, p2_mode: int = 0, p3_mode: int = 0) -> int:
         first_integer, second_integer, store_idx = self.program[self.instruction_ptr + 1:self.instruction_ptr + 4]
         self.program[self.store_mode(store_idx, p3_mode)] = self.read_mode(first_integer, p1_mode) + \
                                                             self.read_mode(second_integer, p2_mode)
-        self.advance(4)
+        return 4
 
-    def multiplication(self, p1_mode: int = 0, p2_mode: int = 0, p3_mode: int = 0):
+    def multiplication(self, p1_mode: int = 0, p2_mode: int = 0, p3_mode: int = 0) -> int:
         first_integer, second_integer, store_idx = self.program[self.instruction_ptr + 1:self.instruction_ptr + 4]
         self.program[self.store_mode(store_idx, p3_mode)] = self.read_mode(first_integer, p1_mode) * \
                                                             self.read_mode(second_integer, p2_mode)
-        self.advance(4)
+        return 4
 
-    def save_param(self, p1_mode: int = 0):
+    def save_param(self, p1_mode: int = 0) -> int:
         store_idx = self.program[self.instruction_ptr + 1]
         if self.user_input is None:
             self.program[self.store_mode(store_idx, p1_mode)] = int(input("User input requested: "))
@@ -54,63 +61,70 @@ class Intcode:
                 self.program[self.store_mode(store_idx, p1_mode)] = next(self.user_input)
             except StopIteration:
                 print("Awaiting input...")
-                return
-        self.advance(2)
+                self.has_program_finished = True
+                return 0
+        return 2
 
-    def resume_execution(self):
-        self.advance(0)
-
-    def save_program_output(self, p1_mode: int = 0):
+    def save_program_output(self, p1_mode: int = 0) -> int:
         param_idx = self.program[self.instruction_ptr + 1]
         self.program_output.append(self.read_mode(param_idx, p1_mode))
-        self.advance(2)
+        return 2
 
-    def jump_if_true(self, p1_mode: int = 0, p2_mode: int = 0):
+    def jump_if_true(self, p1_mode: int = 0, p2_mode: int = 0) -> int:
         condition, param = self.program[self.instruction_ptr + 1:self.instruction_ptr + 3]
         if self.read_mode(condition, p1_mode) != 0:
             self.instruction_ptr = self.read_mode(param, p2_mode)
-            self.advance(0)
+            return 0
         else:
-            self.advance(3)
+            return 3
 
-    def jump_if_false(self, p1_mode: int = 0, p2_mode: int = 0):
+    def jump_if_false(self, p1_mode: int = 0, p2_mode: int = 0) -> int:
         condition, param = self.program[self.instruction_ptr + 1:self.instruction_ptr + 3]
         if self.read_mode(condition, p1_mode) == 0:
             self.instruction_ptr = self.read_mode(param, p2_mode)
-            self.advance(0)
+            return 0
         else:
-            self.advance(3)
+            return 3
 
-    def less_than(self, p1_mode: int = 0, p2_mode: int = 0, p3_mode: int = 0):
+    def less_than(self, p1_mode: int = 0, p2_mode: int = 0, p3_mode: int = 0) -> int:
         first_integer, second_integer, store_idx = self.program[self.instruction_ptr + 1:self.instruction_ptr + 4]
         if self.read_mode(first_integer, p1_mode) < self.read_mode(second_integer, p2_mode):
             self.program[self.store_mode(store_idx, p3_mode)] = 1
         else:
             self.program[self.store_mode(store_idx, p3_mode)] = 0
-        self.advance(4)
+        return 4
 
-    def equal_to(self, p1_mode: int = 0, p2_mode: int = 0, p3_mode: int = 0):
+    def equal_to(self, p1_mode: int = 0, p2_mode: int = 0, p3_mode: int = 0) -> int:
         first_integer, second_integer, store_idx = self.program[self.instruction_ptr + 1:self.instruction_ptr + 4]
         if self.read_mode(first_integer, p1_mode) == self.read_mode(second_integer, p2_mode):
             self.program[self.store_mode(store_idx, p3_mode)] = 1
         else:
             self.program[self.store_mode(store_idx, p3_mode)] = 0
-        self.advance(4)
+        return 4
 
-    def update_relative_base(self, p1_mode: int = 0):
+    def update_relative_base(self, p1_mode: int = 0) -> int:
         self.relative_base += self.read_mode(self.program[self.instruction_ptr + 1], p1_mode)
-        self.advance(2)
+        return 2
 
-    def advance(self, advance_by: int):
+    def resume_execution(self):
+        self.has_program_finished = False
+        n_parameters = 0
+        while not self.has_program_finished:
+            n_parameters = self.next_instruction(n_parameters)
+
+    def next_instruction(self, advance_by: int) -> int:
         self.instruction_ptr += advance_by
         instruction = str(self.program[self.instruction_ptr])
         opcode_key = int(instruction[-2:])
         parameter_modes = map(int, reversed(instruction[:-2]))
         try:
-            self.opcode[opcode_key](*parameter_modes)
+            n_parameters = self.opcode[opcode_key](*parameter_modes)
         except KeyError:
             print(f"Unknown input {self.program[self.instruction_ptr]} encountered at "
                   f"index {self.instruction_ptr}")
+            self.has_program_finished = True
+            return 0
+        return n_parameters
 
     def read_mode(self, value: int, mode: int) -> int:
         try:
@@ -142,9 +156,10 @@ class Intcode:
             self.program += [0]*100
             return self.store_mode(value, mode)
 
-    def end_program(self):
+    def end_program(self) -> int:
         self.has_program_finished = True
         if not self.suppress_output:
             for output in self.program_output:
                 print(output)
+        return 0
         # print("Finished program execution!")
