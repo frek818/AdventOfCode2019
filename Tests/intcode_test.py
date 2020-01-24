@@ -19,19 +19,19 @@ class TestIntcode(unittest.TestCase):
 
     def test_addition(self):
         self.computer.new_program([1001, 1, 1, 0, 99])
-        self.assertEqual(self.computer.program, [2, 1, 1, 0, 99])
+        self.assertEqual(list(self.computer.program.values()), [2, 1, 1, 0, 99])
 
     def test_multiplication_1(self):
         self.computer.new_program([1002, 3, 2, 3, 99])
-        self.assertEqual(self.computer.program, [1002, 3, 2, 6, 99])
+        self.assertEqual(list(self.computer.program.values()), [1002, 3, 2, 6, 99])
 
     def test_multiplication_2(self):
         self.computer.new_program([1002, 4, 99, 5, 99, 0])
-        self.assertEqual(self.computer.program, [1002, 4, 99, 5, 99, 9801])
+        self.assertEqual(list(self.computer.program.values()), [1002, 4, 99, 5, 99, 9801])
 
     def test_program(self):
         self.computer.new_program([1001, 1, 1001, 4, 99, 5, 6, 0, 99])
-        self.assertEqual(self.computer.program, [30, 1, 1001, 4, 1002, 5, 6, 0, 99])
+        self.assertEqual(list(self.computer.program.values()), [30, 1, 1001, 4, 1002, 5, 6, 0, 99])
 
     def test_unknown_opcode(self):
         self.assertRaises(KeyError, self.computer.new_program([98, 0, 0, 99]))

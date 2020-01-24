@@ -28,7 +28,7 @@ class Intcode:
     def new_program(self, new_instructions: List, *, user_input: List = None):
         if new_instructions is None:
             return
-        self.program = new_instructions[:]
+        self.program = ProgramDict(enumerate(new_instructions))
         self.instruction_ptr = 0
         self.relative_base = 0
         self.program_output = []
@@ -41,13 +41,13 @@ class Intcode:
             n_parameters = self.next_instruction(n_parameters)
 
     def addition(self, p1_mode: int = 0, p2_mode: int = 0, p3_mode: int = 0) -> int:
-        first_integer, second_integer, store_idx = self.program[self.instruction_ptr + 1:self.instruction_ptr + 4]
+        first_integer, second_integer, store_idx = [self.program[self.instruction_ptr + i] for i in range(1, 4)]
         self.program[self.store_mode(store_idx, p3_mode)] = self.read_mode(first_integer, p1_mode) + \
                                                             self.read_mode(second_integer, p2_mode)
         return 4
 
     def multiplication(self, p1_mode: int = 0, p2_mode: int = 0, p3_mode: int = 0) -> int:
-        first_integer, second_integer, store_idx = self.program[self.instruction_ptr + 1:self.instruction_ptr + 4]
+        first_integer, second_integer, store_idx = [self.program[self.instruction_ptr + i] for i in range(1, 4)]
         self.program[self.store_mode(store_idx, p3_mode)] = self.read_mode(first_integer, p1_mode) * \
                                                             self.read_mode(second_integer, p2_mode)
         return 4
@@ -71,7 +71,7 @@ class Intcode:
         return 2
 
     def jump_if_true(self, p1_mode: int = 0, p2_mode: int = 0) -> int:
-        condition, param = self.program[self.instruction_ptr + 1:self.instruction_ptr + 3]
+        condition, param = [self.program[self.instruction_ptr + i] for i in range(1, 3)]
         if self.read_mode(condition, p1_mode) != 0:
             self.instruction_ptr = self.read_mode(param, p2_mode)
             return 0
@@ -79,7 +79,7 @@ class Intcode:
             return 3
 
     def jump_if_false(self, p1_mode: int = 0, p2_mode: int = 0) -> int:
-        condition, param = self.program[self.instruction_ptr + 1:self.instruction_ptr + 3]
+        condition, param = [self.program[self.instruction_ptr + i] for i in range(1, 3)]
         if self.read_mode(condition, p1_mode) == 0:
             self.instruction_ptr = self.read_mode(param, p2_mode)
             return 0
@@ -87,7 +87,7 @@ class Intcode:
             return 3
 
     def less_than(self, p1_mode: int = 0, p2_mode: int = 0, p3_mode: int = 0) -> int:
-        first_integer, second_integer, store_idx = self.program[self.instruction_ptr + 1:self.instruction_ptr + 4]
+        first_integer, second_integer, store_idx = [self.program[self.instruction_ptr + i] for i in range(1, 4)]
         if self.read_mode(first_integer, p1_mode) < self.read_mode(second_integer, p2_mode):
             self.program[self.store_mode(store_idx, p3_mode)] = 1
         else:
@@ -95,7 +95,7 @@ class Intcode:
         return 4
 
     def equal_to(self, p1_mode: int = 0, p2_mode: int = 0, p3_mode: int = 0) -> int:
-        first_integer, second_integer, store_idx = self.program[self.instruction_ptr + 1:self.instruction_ptr + 4]
+        first_integer, second_integer, store_idx = [self.program[self.instruction_ptr + i] for i in range(1, 4)]
         if self.read_mode(first_integer, p1_mode) == self.read_mode(second_integer, p2_mode):
             self.program[self.store_mode(store_idx, p3_mode)] = 1
         else:
@@ -120,41 +120,31 @@ class Intcode:
         try:
             n_parameters = self.opcode[opcode_key](*parameter_modes)
         except KeyError:
-            print(f"Unknown input {self.program[self.instruction_ptr]} encountered at "
+            print(f"Unknown input {opcode_key} encountered at "
                   f"index {self.instruction_ptr}")
             self.has_program_finished = True
             return 0
         return n_parameters
 
     def read_mode(self, value: int, mode: int) -> int:
-        try:
-            if mode == Intcode.PARAMETER_MODE:
-                return self.program[value]
-            elif mode == Intcode.IMMEDIATE_MODE:
-                return value
-            elif mode == Intcode.RELATIVE_MODE:
-                return self.program[self.relative_base + value]
-            else:
-                raise ValueError(f"Unknown parameter mode {mode}")
-        except IndexError:
-            self.program += [0]*100
-            return self.read_mode(value, mode)
+        if mode == Intcode.PARAMETER_MODE:
+            return self.program[value]
+        elif mode == Intcode.IMMEDIATE_MODE:
+            return value
+        elif mode == Intcode.RELATIVE_MODE:
+            return self.program[self.relative_base + value]
+        else:
+            raise ValueError(f"Unknown parameter mode {mode}")
 
     def store_mode(self, value: int, mode: int) -> int:
         if mode == Intcode.IMMEDIATE_MODE:
             raise ValueError("Instruction cannot write to parameter in Immediate Mode")
-        try:
-            if mode == Intcode.PARAMETER_MODE:
-                self.program[value]  # Trigger IndexError
-                return value
-            elif mode == Intcode.RELATIVE_MODE:
-                self.program[self.relative_base + value]  # Trigger IndexError
-                return self.relative_base + value
-            else:
-                raise ValueError(f"Unknown parameter mode {mode}")
-        except IndexError:
-            self.program += [0]*100
-            return self.store_mode(value, mode)
+        if mode == Intcode.PARAMETER_MODE:
+            return value
+        elif mode == Intcode.RELATIVE_MODE:
+            return self.relative_base + value
+        else:
+            raise ValueError(f"Unknown parameter mode {mode}")
 
     def end_program(self) -> int:
         self.has_program_finished = True
