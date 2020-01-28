@@ -17,5 +17,3 @@ def time_decorator(func):
 def open_program(filename: str) -> List:
     with open(filename, "r") as f:
         return list(map(int, next(f).split(",")))
-
-
