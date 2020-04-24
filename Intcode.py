@@ -26,6 +26,10 @@ class Intcode:
         self.new_program(self.program, user_input=self.user_input)
 
     def new_program(self, new_instructions: List, *, user_input: List = None):
+        for _ in self.new_program_gen(new_instructions, user_input=user_input):
+            pass
+
+    def new_program_gen(self, new_instructions: List, *, user_input: List = None):
         if new_instructions is None:
             return
         self.program = ProgramDict(enumerate(new_instructions))
@@ -39,6 +43,7 @@ class Intcode:
         n_parameters = 0
         while not self.has_program_finished:
             n_parameters = self.next_instruction(n_parameters)
+            yield
 
     def addition(self, p1_mode: int = 0, p2_mode: int = 0, p3_mode: int = 0) -> int:
         first_integer, second_integer, store_idx = [self.program[self.instruction_ptr + i] for i in range(1, 4)]
@@ -106,7 +111,9 @@ class Intcode:
         self.relative_base += self.read_mode(self.program[self.instruction_ptr + 1], p1_mode)
         return 2
 
-    def resume_execution(self):
+    def resume_execution(self, *, user_input: List = None):
+        if user_input is not None:
+            self.user_input = user_input
         self.has_program_finished = False
         n_parameters = 0
         while not self.has_program_finished:
